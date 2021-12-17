@@ -23,7 +23,7 @@ if(isset($_POST["Send"]) && $_POST["Ulogin"]!="" && $_POST["Upassw"]!="") {
         $Ulogin = htmlspecialchars($_POST["Ulogin"]);
         $Upassw = htmlspecialchars($_POST["Upassw"]);
 
-$dbconn = pg_connect('host=localhost port=5432 dbname=k283 user=postgres password=s2d3f4g5')
+$dbconn = pg_connect('host=localhost port=5432 dbname=k283 user=postgres')
 or die('Could not connect: ' . pg_last_error());
 $query = "SELECT * FROM accounts WHERE login = '$Ulogin'";
 $result = pg_query($dbconn,$query) or die('Query failed: ' . pg_last_error());
