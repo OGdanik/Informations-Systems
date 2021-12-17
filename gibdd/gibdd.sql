@@ -17,26 +17,32 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: k283; Type: DATABASE; Schema: -; Owner: postgres
+-- Name: add_av(character, date, character); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE DATABASE k283 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'Russian_Russia.1251';
+CREATE FUNCTION public.add_av(av character, d date, vin character) RETURNS void
+    LANGUAGE sql
+    AS $$
+	INSERT INTO avarii(avariya,data_avarii,id_auto_av) VALUES (av, d, (SELECT id from list_auto() where vin_nomer=vin));
+$$;
 
 
-ALTER DATABASE k283 OWNER TO postgres;
+ALTER FUNCTION public.add_av(av character, d date, vin character) OWNER TO postgres;
 
-\connect k283
+--
+-- Name: add_owner(character, date, character); Type: FUNCTION; Schema: public; Owner: postgres
+--
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+CREATE FUNCTION public.add_owner(f character, data_p date, auto_vin character) RETURNS void
+    LANGUAGE sql
+    AS $$
+
+INSERT INTO reestr_vladelcev(fio, data_postanovki, id_auto_rv) VALUES (f, data_p, (select id from auto where vin_nomer = auto_vin))
+
+$$;
+
+
+ALTER FUNCTION public.add_owner(f character, data_p date, auto_vin character) OWNER TO postgres;
 
 --
 -- Name: addmm(character, character); Type: FUNCTION; Schema: public; Owner: postgres
@@ -94,6 +100,56 @@ $$;
 ALTER FUNCTION public.del_vin(idvin integer) OWNER TO postgres;
 
 --
+-- Name: get_num(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_num() RETURNS TABLE(id integer, num character)
+    LANGUAGE sql
+    AS $$
+
+SELECT id,number from reestr_nomerov;
+
+$$;
+
+
+ALTER FUNCTION public.get_num() OWNER TO postgres;
+
+--
+-- Name: get_owner(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_owner() RETURNS TABLE(id integer, fio character, data_postanovki date, data_snyatiya date, id_auto_rv integer)
+    LANGUAGE sql
+    AS $$
+
+SELECT * from reestr_vladelcev;
+
+$$;
+
+
+ALTER FUNCTION public.get_owner() OWNER TO postgres;
+
+--
+-- Name: list_auto(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.list_auto() RETURNS TABLE(id integer, vin_nomer character, id_mm integer, marka character, model character, num character, dtv date, dts date, fio character, dtp date, dtvs date, avariya character, dtavar date)
+    LANGUAGE sql
+    AS $$
+
+select v.id, v.vin_nomer, v.id_mm, m.marka, m.model, n.number, n.data_vidachi, n.data_snyatiya, vl.fio, vl.data_postanovki,
+		vl.data_snyatiya, a.avariya, a.data_avarii
+from auto v inner join model_marka m on v.id_mm=m.id 
+left join avarii a on a.id_auto_av=v.id
+left join reestr_nomerov n on n.id_auto_rn=v.id
+left join reestr_vladelcev vl on vl.id_auto_rv=v.id;
+
+$$;
+
+
+ALTER FUNCTION public.list_auto() OWNER TO postgres;
+
+--
 -- Name: set_login(character); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -109,6 +165,51 @@ $$;
 
 
 ALTER FUNCTION public.set_login(log character) OWNER TO postgres;
+
+--
+-- Name: snyatie_gos_nomer(character, date, character); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.snyatie_gos_nomer(num character, dts date, vin character) RETURNS void
+    LANGUAGE sql
+    AS $$
+UPDATE reestr_nomerov SET data_snyatiya=dts WHERE number = num and id_auto_rn = 
+(select id from list_auto() where vin_nomer=vin
+group by vin_nomer, id);
+$$;
+
+
+ALTER FUNCTION public.snyatie_gos_nomer(num character, dts date, vin character) OWNER TO postgres;
+
+--
+-- Name: update_owner(character, date, character); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.update_owner(f character, data_s date, auto_vin character) RETURNS void
+    LANGUAGE sql
+    AS $$
+
+UPDATE reestr_vladelcev SET data_snyatiya=data_s WHERE (fio=f and id_auto_rv = (select id from auto where vin_nomer=auto_vin))
+
+$$;
+
+
+ALTER FUNCTION public.update_owner(f character, data_s date, auto_vin character) OWNER TO postgres;
+
+--
+-- Name: vidacha_gos_nomer(character, date, character); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.vidacha_gos_nomer(num character, dtv date, vin character) RETURNS void
+    LANGUAGE sql
+    AS $$
+insert into reestr_nomerov (number, data_vidachi,id_auto_rn) values (num, dtv, 
+(select id from list_auto() where vin_nomer=vin
+group by vin_nomer, id));
+$$;
+
+
+ALTER FUNCTION public.vidacha_gos_nomer(num character, dtv date, vin character) OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -389,7 +490,7 @@ COPY public.accounts (id, login, pass) FROM stdin;
 --
 
 COPY public.auto (id, vin_nomer, id_mm) FROM stdin;
-20	VVV777777V          	82
+21	AAAAAAAAAAA         	12
 \.
 
 
@@ -398,6 +499,7 @@ COPY public.auto (id, vin_nomer, id_mm) FROM stdin;
 --
 
 COPY public.avarii (id, avariya, data_avarii, id_auto_av) FROM stdin;
+11	rararafdfsgernterngrebtserhnseryresnghfbdrt64565s4ybs5vys35ycs5ynsb6587bs4v3                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            	2021-12-17	21
 \.
 
 
@@ -1538,6 +1640,8 @@ COPY public.model_marka (id, marka, model) FROM stdin;
 --
 
 COPY public.reestr_nomerov (id, number, data_vidachi, data_snyatiya, id_auto_rn) FROM stdin;
+25	О887ОО98  	2021-12-17	2021-12-31	21
+26	В040КО45  	2021-12-16	\N	21
 \.
 
 
@@ -1546,6 +1650,8 @@ COPY public.reestr_nomerov (id, number, data_vidachi, data_snyatiya, id_auto_rn)
 --
 
 COPY public.reestr_vladelcev (id, fio, data_postanovki, data_snyatiya, id_auto_rv) FROM stdin;
+13	Мишина Василиса Кирилловна                        	2021-12-19	2021-12-19	21
+15	Цветков Ибрагил Оскарович                         	2021-12-20	2021-12-18	21
 \.
 
 
@@ -1553,14 +1659,14 @@ COPY public.reestr_vladelcev (id, fio, data_postanovki, data_snyatiya, id_auto_r
 -- Name: Auto_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Auto_id_seq"', 20, true);
+SELECT pg_catalog.setval('public."Auto_id_seq"', 23, true);
 
 
 --
 -- Name: Avarii_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Avarii_id_seq"', 10, true);
+SELECT pg_catalog.setval('public."Avarii_id_seq"', 11, true);
 
 
 --
@@ -1574,14 +1680,14 @@ SELECT pg_catalog.setval('public."Model_Marka_id_seq"', 1141, true);
 -- Name: Reestr_Vladelcev_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Reestr_Vladelcev_id_seq"', 11, true);
+SELECT pg_catalog.setval('public."Reestr_Vladelcev_id_seq"', 15, true);
 
 
 --
 -- Name: Reestr_nomerov_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Reestr_nomerov_id_seq"', 18, true);
+SELECT pg_catalog.setval('public."Reestr_nomerov_id_seq"', 26, true);
 
 
 --

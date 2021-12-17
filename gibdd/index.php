@@ -16,11 +16,7 @@ print '<main>';
 $Error = "";
 if (isset($_POST["exit"])) {
   setcookie ("Ulogin", " ", time()-10);
-  setcookie ("Upassw", " ", time()-10);
-  header("Refresh: 0.5");
-}
-else if (isset($_COOKIE["Ulogin"]) && isset($_COOKIE["Upassw"])) {
-  //print '<p style="text-align: center;" class="btnfont">Вход выполнен</p>';
+  header("Refresh: 0.1");
 }
 
 if(isset($_POST["Send"]) && $_POST["Ulogin"]!="" && $_POST["Upassw"]!="") {
@@ -41,15 +37,14 @@ $Error = "Неверное имя пользователя/пароль";
 
     } else {
 
-    setcookie ("Ulogin", $Ulogin, time()+60);
-    setcookie ("Upassw", $Upassw, time()+60);
-    header("Refresh: 0.5");
+    setcookie ("Ulogin", $Ulogin, time()+3600);
+    header("Refresh: 0.1");
 
     }
   }
 
 
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres password=s2d3f4g5');
+$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
 print '<div class="container">
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom bg-white rounded-bottom shadow">
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
@@ -78,12 +73,16 @@ print '<div class="container">
         
       </ul>
     </header>';
-    print '<div class="divb">
-<a class="button" href="search.php">Поиск по номеру кузова</a>
+    print '<div class="divb">';
+    if (empty($_COOKIE["Ulogin"]))
+    print '<p style="text-align: center;"><a href="index.php">Авторизуйтесь</a> для доступа к системе</p>';
+  else {
+    print '<a class="button" href="search.php">Поиск по номеру кузова</a>
 <a class="button" href="addauto.php">Добавить / удалить автомобиль</a>
 <a class="button" href="ReestrNomerov.php">Реестр номеров</a>
 <a class="button" href="RVladelcev.php">Реестр владельцев</a>
 <a class="button" href="avarii.php">Аварии</a>';
+  }
 if (!isset($_COOKIE["Ulogin"])) {
 print '
   <div style="padding: 70px 0; text-align: center;">

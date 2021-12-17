@@ -12,13 +12,18 @@ print '</head>';
 print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>';
 print '<body class="bg-light">';
 print '<main>';
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres password=s2d3f4g5');
+$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
 print '<div class="container">
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom bg-white rounded-bottom shadow">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
         <svg class="bi me-2" width="40" height="32"><img style="width: 32px; height: 32px;" src="https://romanov-meh.ru/images/25.jpg?crc=4130315980"></svg>
         <span class="fs-5">&nbsp;Учёт автомобилей</span>
       </a>';
+
+      if (isset($_POST["exit"])) {
+        setcookie ("Ulogin", " ", time()-10);
+        header("Refresh: 0.1");
+      }
 
       if (isset($_COOKIE["Ulogin"])) {
         print '
@@ -43,13 +48,18 @@ print '
       </ul>
     </header>
   </div>';
+
+  if (empty($_COOKIE["Ulogin"]))
+  print '<p style="text-align: center;"><a href="index.php">Авторизуйтесь</a> для доступа к системе</p>';
+else {
+
 print '<div class="container-sm">';
 print '<form class="row g-3 form-control-lg" method="POST" action="">
 <div class="mb-3">
 <label for="selvin">Поиск автомобиля по номеру кузова</label>
 <input style="width: 50%;" list="listvin" id="selvin" name="selvin">
                                 <datalist name="vin" id="listvin">';
-$sql="select distinct id,vin_nomer from public.auto order by vin_nomer";
+$sql="SELECT distinct id,vin_nomer from list_auto() order by vin_nomer";
 $result=pg_query($con,$sql);
 $n=pg_num_rows($result);
 for($i=0; $i<$n; $i++)
@@ -65,9 +75,9 @@ print '
                                   <div style="text-align: center;"><button type="submit" value="Search" name="search" class="btnsearch" style="width: 20%;"><span class="btnfont">Поиск</span></button></div>
                              </form>';
 
-print '<form class="row g-3 form-control-lg" method="POST" action="">
+/*print '<form class="row g-3 form-control-lg" method="POST" action="">
 <div class="mb-3">
-<label for="selfio">Поиск автомобилей владельца</label>
+<label for="selfio">История автомобилей владельца</label>
 <input style="width: 50%;" list="listfio" id="selfio" name="selfio">
                                 <datalist name="fio" id="listfio">';
                                 $sql="select distinct fio from public.reestr_vladelcev order by fio";
@@ -79,11 +89,11 @@ print '<form class="row g-3 form-control-lg" method="POST" action="">
                                             $fio = $row->fio;
                                                 print '<option value="'.$fio.'"></option>';
                                                 }
-                                                print '
-                                                     </datalist>
-                                                      </div>
-                                                        <div style="text-align: center;"><button type="submit" value="Search" name="searchfio" class="btnsearch" style="width: 20%;"><span class="btnfont">Поиск</span></button></div>
-                                    </form>';
+            print '
+            </datalist>
+            </div>
+            <div style="text-align: center;"><button type="submit" value="Search" name="searchfio" class="btnsearch" style="width: 20%;"><span class="btnfont">Поиск</span></button></div>
+            </form>';
 
 print '</div>';
 print '<div class="cont">';
@@ -94,7 +104,12 @@ $countvin = pg_query($con,"select b.fio, count(a)
 from auto a inner join reestr_vladelcev b on a.id=b.id_auto_rv
 group by b.fio
 having b.fio = '".$fio1."'");
-$count = pg_fetch_object($countvin)->count;
+$cobj = pg_fetch_object($countvin);
+if (empty($cobj->count)) {
+    print '<p style="color:red;">Такого владельца нет';
+}
+else {
+$count = $cobj->count;
 $arrvin = array();
 
     $ffio = $_POST['selfio'];
@@ -175,68 +190,75 @@ print '</table></div>';
 }
 print '</td></div>';
 }
+}*/
 
 
 print '<div class="cont">';
 if (isset($_POST['search']) && isset($_POST['selvin'])) {
 $fvin = $_POST['selvin'];
-    $svin = "select * from public.auto where vin_nomer = '".$fvin."'";
+    $svin = "SELECT distinct * from list_auto() where vin_nomer = '".$fvin."'";
     $rvin = pg_query($con,$svin);
     $rowvin = pg_fetch_object($rvin);
+            if (empty($rowvin->id)) {
+            print '<p style="color:red;">Такого VIN-номера не существует';
+            die();
+            }
+            else {
     $vinid = $rowvin->id;
     $vin = $rowvin->vin_nomer;
     $vinidmm = $rowvin->id_mm;
-                    $sql="select * from public.model_marka where id = '".$vinidmm."'";
-                    $resmm=pg_query($con,$sql);
-                    $fo = pg_fetch_object($resmm);
-                    $marka = $fo->marka;
-                    $model = $fo->model;
-                    print '<div class="set"><span class="hh">VIN номер: '.$vin.'</span></div><div class="set"><span class="hh">Автомобиль: '.$marka . $model.'</span></div>';
-    $selnum = "select * from public.reestr_nomerov where id_auto_rn = '".$vinid."'";
-    $resnum=pg_query($con,$selnum);
-    $n = pg_num_rows($resnum);
-                                                                          
+        $marka = $rowvin->marka;
+        $model = $rowvin->model;
+print '<div class="set"><span class="hh">VIN номер: '.$vin.'</span></div><div class="set"><span class="hh">Автомобиль: '.$marka . $model.'</span></div>';
+$svin = "SELECT distinct num,dtv,dts from list_auto() where vin_nomer = '".$fvin."'";
+    $rvin = pg_query($con,$svin);
+    $n = pg_num_rows($rvin);
+               
+    
     print '<div class="set"><p><span class="hh">История гос. номеров:</span></p><table class="tb">
     <tr><td class="tbr">Номер </td><td class="tbr">Дата выдачи </td><td class="tbr">Дата снятия </td></tr>';
         for($i=0; $i<$n; $i++) {
-            $rownum = pg_fetch_object($resnum);
-            $num = $rownum->number;
-            $datav = $rownum->data_vidachi;
-            $datas = $rownum->data_snyatiya;
+            $rownum = pg_fetch_object($rvin);
+            $num = $rownum->num;
+            $datav = $rownum->dtv;
+            $datas = $rownum->dts;
             print '<tr><td class="tbr">'.$num.'<td class="tbr">'.$datav.'<td class="tbr">'.$datas.' ';
                               }
              print '</table></div>';
                         print '<div class="set"><p><span class="hh">История владельцев:</span></p>
                         <table class="tb">
                         <tr><td class="tbr">ФИО владельца </td><td class="tbr">Дата постановки </td><td class="tbr">Дата снятия </td></tr>';
-                         $selfio = "select * from public.reestr_vladelcev where id_auto_rv = '".$vinid."'";
+                         $selfio = "SELECT distinct fio,dtp,dtvs from list_auto() where vin_nomer = '".$fvin."'";
                          $resfio=pg_query($con,$selfio);
                          $nf = pg_num_rows($resfio);
                           for($i=0; $i<$nf; $i++) {
                             $rowfio = pg_fetch_object($resfio);
                             $fio = $rowfio->fio;
-                            $datavp = $rowfio->data_postanovki;
-                            $datass = $rowfio->data_snyatiya;
+                            $datavp = $rowfio->dtp;
+                            $datass = $rowfio->dtvs;
                             print '<tr><td class="tbr">'.$fio.'<td class="tbr">'.$datavp.'<td class="tbr">'.$datass.' ';
                                                 }
                             print '</table></div>';
     print '<div class="set1"><p style="padding: 3px;"><span class="hh">История аварий:</span></p>
         <table class="tb">
         <tr><td class="tbr">Описание аварии</td><td class="tbr"><span class="kat">Дата аварии</span></td></tr>';
-        $selav = "select * from public.avarii where id_auto_av = '".$vinid."'";
+        $selav = "SELECT distinct avariya,dtavar from list_auto() where vin_nomer = '".$fvin."'";
         $resav=pg_query($con,$selav);
         $na = pg_num_rows($resav);
         for($i=0; $i<$na; $i++) {
         $rowav = pg_fetch_object($resav);
         $av = $rowav->avariya;
-        $dataav = $rowav->data_avarii;
+        $dataav = $rowav->dtavar;
         print '<tr><td class="tbr">'.$av.'<td class="tbr" style="width: 10%">'.$dataav.'';
                                  }
-}
+
                                                                                                                                                                                                                                                                                                                      
 
-
-print '</table></div></div>';
+print '</table>';
+}
+}
+print '</div></div>';
+}
 print '</main>';
 
 

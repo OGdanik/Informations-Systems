@@ -12,7 +12,7 @@ print '</head>';
 print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>';
 print '<body class="bg-light">';
 print '<main>';
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres password=s2d3f4g5');
+$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
 print '<div class="container ">';
 $Error = '';
 $accept = '';
@@ -35,9 +35,9 @@ $login = trim($login);
 $password = trim($password);
 
 
-$result = pg_query($con,"SELECT set_login('$login')") or die('Query failed: ' . pg_last_error());
+$result = pg_query($con,"SELECT * from set_login('$login')") or die('Query failed: ' . pg_last_error());
 $myrow = pg_fetch_array($result);
-if (!empty($myrow[0][1])) {
+if (!empty($myrow['id'])) {
 $Error = "Извините, введённый вами логин уже зарегистрирован. Введите другой логин.";
 } 
 else {

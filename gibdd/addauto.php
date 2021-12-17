@@ -12,7 +12,7 @@ print '</head>';
 print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>';
 print '<body class="bg-light">';
 print '<main>';
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres password=s2d3f4g5');
+$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
 print '<div class="container ">
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom bg-white rounded-bottom shadow">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
@@ -22,8 +22,7 @@ print '<div class="container ">
 
       if (isset($_POST["exit"])) {
         setcookie ("Ulogin", " ", time()-10);
-        setcookie ("Upassw", " ", time()-10);
-        header("Refresh: 0.5");
+        header("Refresh: 0.1");
       }
 
       if (isset($_COOKIE["Ulogin"])) {
@@ -46,6 +45,10 @@ print '<div class="container ">
         
       </ul>
     </header>';
+
+    if (empty($_COOKIE["Ulogin"]))
+    print '<p style="text-align: center;"><a href="index.php">Авторизуйтесь</a> для доступа к системе</p>';
+  else {
 
 if (isset($_POST['save']) && isset($_POST['line1']) && isset($_POST['line2'])) {
     $marka = $_POST['line1'];
@@ -157,7 +160,7 @@ print '
                              </form></div>
                              <div class="col-sm"></div>
                              </div>';
-
+  }
 
 
 
