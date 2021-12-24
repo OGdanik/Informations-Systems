@@ -1,4 +1,5 @@
 <?php
+session_start();
 print '<html lang="ru">';
 print '<head>
 <link rel="shortcut icon" href="images/car.ico" type="image/x-icon">';
@@ -15,21 +16,20 @@ print '<main>';
 
 $Error = "";
 if (isset($_POST["exit"])) {
-  setcookie ("Ulogin", " ", time()-10);
-  header("Refresh: 0.1");
+  session_unset();
 }
 
 if(isset($_POST["Send"]) && $_POST["Ulogin"]!="" && $_POST["Upassw"]!="") {
         $Ulogin = htmlspecialchars($_POST["Ulogin"]);
         $Upassw = htmlspecialchars($_POST["Upassw"]);
 
-$dbconn = pg_connect('host=localhost port=5432 dbname=k283 user=postgres')
+$dbconn = pg_connect('host=localhost port=5432 dbname=gibdd user=postgres')
 or die('Could not connect: ' . pg_last_error());
 $query = "SELECT * FROM accounts WHERE login = '$Ulogin'";
 $result = pg_query($dbconn,$query) or die('Query failed: ' . pg_last_error());
 $passw = pg_fetch_array($result);
 if (empty($passw['pass'])) {
-  $Error = "Такого пользователя не существует";
+  $Error = "Неверное имя пользователя/пароль";
 } else
 if($Upassw != $passw['pass']) {
 if(isset($_POST["Send"])) 
@@ -37,14 +37,12 @@ $Error = "Неверное имя пользователя/пароль";
 
     } else {
 
-    setcookie ("Ulogin", $Ulogin, time()+3600);
-    header("Refresh: 0.1");
-
+    $_SESSION["login"]= $Ulogin;
     }
   }
 
 
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
+$con = pg_connect('host=localhost port=5432 dbname=gibdd user=postgres');
 print '<div class="container">
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom bg-white rounded-bottom shadow">
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
@@ -52,10 +50,10 @@ print '<div class="container">
     <span class="fs-5">&nbsp;Учёт автомобилей</span>
   </a>';
 
-      if (isset($_COOKIE["Ulogin"])) {
+      if (isset($_SESSION["login"])) {
         print '
         <table>
-        <tr><td><p>Добро пожаловать, '.$_COOKIE["Ulogin"].'</p>
+        <tr><td><p>Добро пожаловать, '.$_SESSION["login"].'</p>
         <td><form style="margin: 1% 10px;" action="'.$_SERVER['PHP_SELF'].'" method="post">
         <input type="submit" value="Выйти" name="exit" />
         </form>
@@ -74,7 +72,7 @@ print '<div class="container">
       </ul>
     </header>';
     print '<div class="divb">';
-    if (empty($_COOKIE["Ulogin"]))
+    if (empty($_SESSION["login"]))
     print '<p style="text-align: center;"><a href="index.php">Авторизуйтесь</a> для доступа к системе</p>';
   else {
     print '<a class="button" href="search.php">Поиск по номеру кузова</a>
@@ -83,7 +81,7 @@ print '<div class="container">
 <a class="button" href="RVladelcev.php">Реестр владельцев</a>
 <a class="button" href="avarii.php">Аварии</a>';
   }
-if (!isset($_COOKIE["Ulogin"])) {
+if (!isset($_SESSION["login"])) {
 print '
   <div style="padding: 70px 0; text-align: center;">
   <p style="font-size: 16pt;">Вход

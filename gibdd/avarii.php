@@ -1,4 +1,5 @@
 <?php
+session_start();
 print '<!DOCTYPE HTML>';
 print '<html lang="ru">';
 print '<head>
@@ -12,7 +13,7 @@ print '</head>';
 print '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>';
 print '<body class="bg-light">';
 print '<main>';
-$con = pg_connect('host=localhost port=5432 dbname=k283 user=postgres');
+$con = pg_connect('host=localhost port=5432 dbname=gibdd user=postgres');
 print '<div class="container">
     <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom bg-white rounded-bottom shadow">
       <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
@@ -21,14 +22,13 @@ print '<div class="container">
       </a>';
 
       if (isset($_POST["exit"])) {
-        setcookie ("Ulogin", " ", time()-10);
-        header("Refresh: 0.1");
+        session_unset();
       }
 
-      if (isset($_COOKIE["Ulogin"])) {
+      if (isset($_SESSION["login"])) {
         print '
         <table>
-        <tr><td><p>Добро пожаловать, '.$_COOKIE["Ulogin"].'</p>
+        <tr><td><p>Добро пожаловать, '.$_SESSION["login"].'</p>
         <td><form style="margin: 1% 10px;" action="'.$_SERVER['PHP_SELF'].'" method="post">
         <input type="submit" value="Выйти" name="exit" />
         </form>
@@ -46,7 +46,7 @@ print '<div class="container">
       </ul>
     </header>
   </div>';
-  if (empty($_COOKIE["Ulogin"]))
+  if (empty($_SESSION["login"]))
   print '<p style="text-align: center;"><a href="index.php">Авторизуйтесь</a> для доступа к системе</p>';
 else {
 print '<div class="cont">';
